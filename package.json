@@ -1,0 +1,38 @@
+{
+  "name": "expiring-token-guard",
+  "version": "0.1.0",
+  "description": "Storage-agnostic helpers for Shopify expiring offline access tokens: single-flight refresh, rollback-safe migration, retry-once on 401, uninstall-safe webhooks.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
+  },
+  "files": [
+    "dist/src",
+    "README.txt",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "tsc -p tsconfig.json && node --test \"dist/test/*.test.js\""
+  },
+  "keywords": [
+    "shopify",
+    "oauth",
+    "offline-access-token",
+    "refresh-token",
+    "expiring-tokens"
+  ],
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}
