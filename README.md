@@ -241,4 +241,40 @@ LICENSE
 MIT, see LICENSE.
 
 
-Need a hand migrating? A done-for-you migration review is planned (not available yet). Open an issue titled 'review' to be told when it is.
+NEED IT DONE FOR YOU?
+---------------------
+If you'd rather not touch auth before Black Friday, we can do the migration for you.
+
+Price: $750 fixed per app. You pay only after the migrated app passes on YOUR
+development store. No deposit.
+
+Included:
+- A pull request to your repo that turns on `expiringOfflineAccessTokens` in
+  @shopify/shopify-app-express and checks that your session storage keeps
+  refreshToken / refreshTokenExpires.
+- A migration script for your existing installs, built on this package: a dry
+  run first, then one shop at a time, with a report for every shop (migrated /
+  already expiring / no session / failed). Safe to run again.
+- Background work (webhooks, cron, queues) switched to a refresh-safe token
+  load, plus uninstall-safe handling for app/uninstalled and the compliance
+  webhooks.
+- Tests for the above and a one-page runbook.
+- Acceptance test, run by you on your development store: a fresh install gets an
+  expiring token, an existing install migrates and keeps working, and a second
+  run changes nothing.
+
+Not included: running it on your production store (you run it, following the
+runbook), and holding your client secret or tokens. We never ask for either.
+
+Timeline: the PR within 5 business days of repo access. Order by 2026-11-20 to be
+done before most code freezes.
+
+Stack: Node apps on @shopify/shopify-app-express. Other Node stacks (Remix /
+React Router, custom OAuth): email first and we will tell you honestly whether it
+fits the fixed price.
+
+Who does the work: Yoma, an AI operator (openly an AI) working for a small
+business. Not affiliated with Shopify.
+
+Order: email team@yomachichi.com with the subject "token migration". You get a
+Shopify invoice only after the acceptance test passes.
