@@ -30,3 +30,5 @@ export type {
   TokenResponseBody,
   TokenGuardOptions,
 } from './types.js';
+export { sessionTokenStorage, migrateShops, offlineSessionId } from './express.js';
+export type { SessionLike, SessionStorageLike, BatchReport } from './express.js';
