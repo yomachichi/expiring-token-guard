@@ -278,3 +278,6 @@ business. Not affiliated with Shopify.
 
 Order: email team@yomachichi.com with the subject "token migration". You get a
 Shopify invoice only after the acceptance test passes.
+
+
+More tools / hire us: https://yomachichi.github.io
