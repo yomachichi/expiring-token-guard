@@ -118,9 +118,9 @@ WHAT IT DOES
      the migrate page above) inside the same per-shop lock and stores the
      result. Shopify: "Don't do the two at the same time for the same store.
      Acquiring a token and refreshing one each retire the other's result."
-   - If you use @shopify/shopify-app-express, it does not request expiring
-     tokens at all (shopify-app-js #3234); this package does not patch it. You
-     have to call the exchange with expiring=1 yourself.
+   - @shopify/shopify-app-express 8.0.0 and later can request expiring tokens
+     for NEW installs (future flag expiringOfflineAccessTokens). Existing
+     installs are not converted; see "Express apps" below.
 
 5. uninstallSafeWebhook(handler, { storage? })
    - For app/uninstalled and the compliance topics (customers/data_request,
@@ -138,6 +138,66 @@ WHAT IT DOES
 Other exports: needsRefresh, normalizeShop, isNonExpiringTokenRejected (matches
 the documented 403 phrase; a missing scope is also 403, so check the phrase
 before re-authenticating), and the error classes (each has a stable `code`).
+
+
+EXPRESS APPS: MIGRATING EXISTING INSTALLS (0.2.0)
+-------------------------------------------------
+@shopify/shopify-app-express 8.0.0 added `future: { expiringOfflineAccessTokens: true }`.
+Its CHANGELOG says: "Existing installs keep their current non-expiring token until
+the next OAuth" and "`ensureValidOfflineSession` will not upgrade a non-expiring
+token either". So each existing install still needs the one-time migration
+exchange before 2027-01-01.
+https://github.com/Shopify/shopify-app-js/blob/main/packages/apps/shopify-app-express/CHANGELOG.md
+
+  import { Session } from '@shopify/shopify-api';
+  import { createTokenGuard, sessionTokenStorage, migrateShops } from 'expiring-token-guard';
+
+  // the SAME sessionStorage your shopifyApp({ sessionStorage }) uses
+  const storage = sessionTokenStorage(sessionStorage, (data) => new Session(data));
+  const guard = createTokenGuard({ clientId, clientSecret, storage });
+
+  const plan = await migrateShops(guard, storage, shops, { dryRun: true }); // no network, no writes
+  const report = await migrateShops(guard, storage, shops);
+  // report: { migrated, alreadyExpiring, skippedNoSession, failed: [{ shop, error }] }
+
+- sessionTokenStorage reads and writes the offline Session row
+  (id `offline_{shop}`). It writes accessToken, expires, refreshToken and
+  refreshTokenExpires onto the existing row and keeps every other field.
+  Online sessions are ignored.
+- migrateShops goes one shop at a time, never in parallel. It skips duplicates,
+  shops with no offline session and rows that already have a refresh token. It
+  refuses any host that is not <name>.myshopify.com before a request. A failure is
+  recorded for that shop, its row is left as it was, and the run continues. Running
+  it again is safe: migrated shops are skipped, and a shop whose write failed is
+  retried with its original token (the 7-day "same pair" retry above).
+- Turn the express flag on BEFORE you migrate, so the package refreshes the new
+  tokens. Your session storage must persist refreshToken / refreshTokenExpires;
+  update the adapter if it does not.
+
+What was checked (2026-10-23):
+- Unit tests against the stateful fake (test/express.test.ts), including two
+  negative controls: a rejected exchange leaves the row untouched, and a failed
+  storeSession is reported as a failure, not as a migration.
+- With the real @shopify/shopify-api 15.0.1 Session class and the real
+  MemorySessionStorage and SQLiteSessionStorage 8.0.1 adapters, fed a response
+  with the exact fields Shopify returned on 2026-10-22: the dry run made 0
+  requests. The run wrote a Session that read back with refreshToken, expires
+  (about 3599 s) and refreshTokenExpires (about 90 days), kept its state and
+  scope, reported isActive true, and left the online session untouched. A
+  second run made 0 requests and reported the shop as already expiring.
+- Against the real token endpoint of our development store, with a
+  placeholder that is not a live token: HTTP 400
+  {"error":"invalid_subject_token"}. The bridge reported that shop as failed
+  and left the row unchanged.
+- End to end on our development store (2026-10-23): a fresh install through
+  the legacy OAuth flow issued a real NON-expiring token (it answered GraphQL
+  with 200), stored as an offline Session in the real SQLiteSessionStorage.
+  migrateShops dry run listed the shop; the real run migrated it: the new
+  token answered GraphQL with 200, the Session now carries a refresh token and
+  expires in about 3599 s, and the old token is refused with 401. A second run
+  made no exchange and reported the shop as already expiring.
+- Not checked: other adapters (Prisma, Redis, MongoDB, ...) and the express
+  package's own refresh after migration.
 
 
 ABOUT DUPLICATE SESSION IDS (shopify-app-js #3478)

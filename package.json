@@ -1,6 +1,6 @@
 {
   "name": "expiring-token-guard",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Storage-agnostic helpers for Shopify expiring offline access tokens: single-flight refresh, rollback-safe migration, retry-once on 401, uninstall-safe webhooks.",
   "license": "MIT",
   "type": "module",
